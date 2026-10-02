@@ -102,7 +102,8 @@ class PrinterQueuBuilderGUI:
 	   
 		misc_options_frame = tk.LabelFrame(search_tab, text= "Misc")
 		misc_options_frame.grid(row=4, column=7, padx=1, pady=1, rowspan = 4, sticky=tk.E)
-		delete_blacklist_q = tk.Checkbutton(misc_options_frame, text="Delete blacklisted codes")
+		self.delete_blacklist_variable = tk.BooleanVar(value = False)
+		delete_blacklist_q = tk.Checkbutton(misc_options_frame, variable = self.delete_blacklist_variable, text="Delete blacklisted codes")
 		delete_blacklist_q.grid(row=0, column=0, padx=1, pady=1,sticky=tk.W)
 		ignore_nofiles_q = tk.Checkbutton(misc_options_frame, text="placeholder")
 		ignore_nofiles_q.grid(row=1, column=0, padx=1, pady=1,sticky=tk.W)
@@ -229,6 +230,8 @@ class PrinterQueuBuilderGUI:
 		search_string = self.search_widget.get()
 		normalize_quantities = self.normalize_quantities_variable.get()
 		
+		blacklist_filter = self.delete_blacklist_variable.get()
+		self.blacklist = [line[:8] for line in self.blacklist_widget.get("1.0","end-1c").splitlines() if len(line) >= 8]
 		
 		print(white_filter," | ",cmyk_filter," | ",frost_filter," | ",backend_stock," | ",tfolder_stock," | ",search_string)
 		self.filtered_data = list(self.merged_data.values())
@@ -253,6 +256,9 @@ class PrinterQueuBuilderGUI:
 		if search_string != "":
 			print("we search pattern filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if search_string.lower() in data_row.get("reference").lower() ]
+		if blacklist_filter:
+			print("we entered blacklist filter")
+			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("reference") not in self.blacklist ]
 		if normalize_quantities:
 			print("we entered normalizing filter")
 			for data_row in self.filtered_data:
