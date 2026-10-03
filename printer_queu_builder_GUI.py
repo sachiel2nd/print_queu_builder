@@ -16,8 +16,8 @@ def sorting_function(mydic):
 		try:
 			result = int(row_number)
 		except:
-			result=0
-	else: result = 0
+			result=10000
+	else: result = 10000
 	return result
 	
 
@@ -231,7 +231,7 @@ class PrinterQueuBuilderGUI:
 		normalize_quantities = self.normalize_quantities_variable.get()
 		
 		blacklist_filter = self.delete_blacklist_variable.get()
-		self.blacklist = [line[:8] for line in self.blacklist_widget.get("1.0","end-1c").splitlines() if len(line) >= 8]
+		self.blacklist = [str(line[:8]).lower() for line in self.blacklist_widget.get("1.0","end-1c").splitlines() if len(line) >= 8]
 		
 		print(white_filter," | ",cmyk_filter," | ",frost_filter," | ",backend_stock," | ",tfolder_stock," | ",search_string)
 		self.filtered_data = list(self.merged_data.values())
@@ -258,7 +258,7 @@ class PrinterQueuBuilderGUI:
 			self.filtered_data = [data_row for data_row in self.filtered_data if search_string.lower() in data_row.get("reference").lower() ]
 		if blacklist_filter:
 			print("we entered blacklist filter")
-			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("reference") not in self.blacklist ]
+			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("reference").lower() not in self.blacklist ]
 		if normalize_quantities:
 			print("we entered normalizing filter")
 			for data_row in self.filtered_data:
@@ -283,8 +283,10 @@ class PrinterQueuBuilderGUI:
 	def update_table(self):
 		self.search_result_widget.delete(*self.search_result_widget.get_children())	
 		counter = 0  #for testing purposes
-		self.search_result_widget.tag_configure("normal")
-		self.search_result_widget.tag_configure("blacklisted", background="#888888")
+		
+		self.search_result_widget.tag_configure("normal_even", background="#F0F0F0")
+		self.search_result_widget.tag_configure("normal_odd", background="#E0E0E0")
+		self.search_result_widget.tag_configure("blacklisted", background="#777777")
 		self.search_result_widget.tag_configure("duplicated", background="#FF7F7F")
 		for data_row in self.filtered_data:
 			code = data_row.get("reference")
@@ -296,14 +298,16 @@ class PrinterQueuBuilderGUI:
 			frost = data_row.get("frost")
 			gloss = data_row.get("gloss")
 			
-			if code in self.blacklist:
+			if code.lower() in self.blacklist:
 				mytag = "blacklisted"
 				print("blacklisted tag found")
 			elif data_row.get("duplicate"):
 				print("duplicated tag found")
 				mytag = "duplicated"
+			elif counter % 2:
+				mytag = "normal_even"
 			else:
-				mytag = "normal"
+				mytag = "normal_odd"
 			
 			values_tuples = tuple(( "" if y is None else y) for y in  [code,quantity,tdrive_stock,backend_stock,cmyk,white,frost,gloss])
 			self.search_result_widget.insert("", "end", values=values_tuples, tags=mytag)
