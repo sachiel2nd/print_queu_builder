@@ -1,0 +1,19 @@
+reference;id_product;quantity;active;id_category_default;id_product_attribute;stock_backend;sales_01months;sales_03months;sales_06months;sales_12months;sales_18months
+TH0022P1;3073;10;1;541;;"Review 3";2;3;8;13;22
+TH0022P2;3074;47;1;543;;"Review 3";2;3;8;13;22
+TH0022P3;3075;161;1;426;;"Ravage Clear Vinyl";2;3;8;13;22
+TH0022P4;6179;79;1;409;;"Gloss Black Vinyl";2;3;8;13;22
+TH0023P1;3076;14;1;542;;Review;1;1;2;4;7
+TH0023P2;3077;17;1;542;;Review;1;1;2;4;7
+TH0023P3;3078;20;1;627;;"Macro Gold";1;1;2;4;7
+TH0023P4;3079;54;1;426;;"Ravage Clear Vinyl";1;1;2;4;7
+TH0014P1;3061;21;1;433;;"Review 2";0;0;0;1;2
+TH0016P1;3063;14;1;433;;"Review 2";0;3;6;7;11
+TH0013P1;3059;16;1;542;;Review;4;13;18;36;49
+TH0013P2;3060;20;1;542;;Review;4;13;18;36;49
+TH0007P1;3051;10;1;542;;Review;1;2;9;22;36
+TH0021P1;3069;32;1;540;;Review;1;1;3;8;10
+TH0021P2;3070;31;1;541;;"Review 3";1;1;3;8;10
+TH0021P3;3071;33;1;433;;"Review 2";1;1;3;8;10
+TH0021P4;3072;13;1;437;;"Gloss Clear Vinyl";1;1;3;8;10
+TH0005P1;3048;10;1;625;;"Micro Chrome";1;12;14;25;41
