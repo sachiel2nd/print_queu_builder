@@ -74,38 +74,48 @@ class PrinterQueuBuilderGUI:
 		self.inventory_file = ttk.Button(search_tab, text = "Invetory File", command= self.get_csv)
 		self.inventory_file.grid(row=2, column=2, padx=2, pady=(4,4), sticky=tk.NW)
 		
-		
+		#########################
 		##### UPPER OPTIONS #####
+		#########################
+		
+		# Upper Frame
 		upper_options_frame = tk.Frame(search_tab)
 		upper_options_frame.grid(row=2, column=3, padx=2, pady=(4,4), columnspan = 7, sticky=tk.W)
 		
-		rvw_status_options = tk.LabelFrame(upper_options_frame, text= "RVW Filter(Placeholder)")
+		# RVW availability
+		rvw_status_options = tk.LabelFrame(upper_options_frame, text= "RVW Filter")
 		rvw_status_options.grid(row=1, column=3, padx=1, pady=1, sticky=tk.E, rowspan = 4)
 		self.rvw_filter = tk.IntVar(rvw_status_options, value=-1)
 		tk.Radiobutton(rvw_status_options, text="NA", variable=self.rvw_filter, value=-1).grid(row=1, column=0, sticky=tk.W)
 		tk.Radiobutton(rvw_status_options, text="Available", variable=self.rvw_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(rvw_status_options, text="Unavailable", variable=self.rvw_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
-		backend_status_options = tk.LabelFrame(upper_options_frame, text= "Backend Filter(Placeholder)")
+		# Backend availability
+		backend_status_options = tk.LabelFrame(upper_options_frame, text= "Backend Filter")
 		backend_status_options.grid(row=1, column=4, padx=1, pady=1, sticky=tk.E, rowspan = 4)
 		self.backend_filter = tk.IntVar(backend_status_options, value=-1)
 		tk.Radiobutton(backend_status_options, text="NA", variable=self.backend_filter, value=-1).grid(row=1, column=0, sticky=tk.W)
 		tk.Radiobutton(backend_status_options, text="Available", variable=self.backend_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(backend_status_options, text="Unavailable", variable=self.backend_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
+		# Sales options
 		sales_selection_frame = tk.LabelFrame(upper_options_frame, text= "Sales timefram")
 		sales_selection_frame.grid(row=1, column=1, padx=1, pady=1, rowspan = 2)
 		self.sales_selection_widget = ttk.Combobox(sales_selection_frame,values=list(self.sale_keywords.keys()), state="readonly"  )
+		self.sales_selection_widget.set(list(self.sale_keywords.keys())[0])
 		self.sales_selection_widget.grid(row=1, column=1, padx=1, pady=1)
 		
+		# Projection options
 		projection_selection_frame = tk.LabelFrame(upper_options_frame, text= "Projection Timeframe")
 		projection_selection_frame.grid(row=3, column=1, padx=1, pady=1, rowspan = 2)
 		self.projection_selection_widget = ttk.Combobox(projection_selection_frame,values=list(self.sale_keywords.keys()), state="readonly" )
+		self.projection_selection_widget.set(list(self.sale_keywords.keys())[0])
 		self.projection_selection_widget.grid(row=1, column=1, padx=1, pady=1)
 		
 		
 		##### LOWER OPTIONS #####
 		
+		# Search text filter
 		self.search_widget = tk.Entry(search_tab)
 		self.search_widget.grid(row=5, column=1, padx=4, pady=4, sticky="ew", columnspan = 2)
 		self.search_widget.bind("<Return>", self.automatic_search)
@@ -113,6 +123,7 @@ class PrinterQueuBuilderGUI:
 		self.search_button = ttk.Button(search_tab, text = "Search", command= self.do_search)
 		self.search_button.grid(row=6, column=1, padx=4, pady=4, sticky=tk.W)
 		
+		# White Filter
 		white_options = tk.LabelFrame(search_tab, text= "White filter")
 		white_options.grid(row=4, column=4, padx=1, pady=1, rowspan = 4, sticky=tk.E)
 		self.white_filter = tk.IntVar(white_options, value=-1)
@@ -120,6 +131,7 @@ class PrinterQueuBuilderGUI:
 		tk.Radiobutton(white_options, text="Yes", variable=self.white_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(white_options, text="No", variable=self.white_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
+		#Frost filter
 		frost_options = tk.LabelFrame(search_tab, text= "Frost filter")
 		frost_options.grid(row=4, column=5, padx=1, pady=1, rowspan = 4, sticky=tk.E)
 		self.frost_filter = tk.IntVar(frost_options, value=-1)
@@ -127,7 +139,7 @@ class PrinterQueuBuilderGUI:
 		tk.Radiobutton(frost_options, text="Yes",variable=self.frost_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(frost_options, text="No", variable=self.frost_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
-		
+		# CMYK filter
 		cmyk_options = tk.LabelFrame(search_tab, text= "CMYK filter")
 		cmyk_options.grid(row=4, column=6, padx=1, pady=1, rowspan = 4, sticky=tk.E)
 		self.cmyk_filter = tk.IntVar(cmyk_options, value=-1)
@@ -135,11 +147,13 @@ class PrinterQueuBuilderGUI:
 		tk.Radiobutton(cmyk_options, text="Yes", variable=self.cmyk_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(cmyk_options, text="No", variable=self.cmyk_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 			
+		# Backend stock filter
 		backend_stock_frame = tk.LabelFrame(search_tab, text= "Backend stock")
 		backend_stock_frame.grid(row=4, column=3, padx=1, pady=1, rowspan = 2)
 		self.backend_stock_widget = ttk.Combobox(backend_stock_frame,values=["All"])
 		self.backend_stock_widget.grid(row=1, column=1, padx=1, pady=1)
 		
+		# RVW stock filter
 		tfolder_stock_frame = tk.LabelFrame(search_tab, text= "Tdrive stock")
 		tfolder_stock_frame.grid(row=6, column=3, padx=1, pady=1, rowspan = 2)
 		self.tfolder_stock_widget = ttk.Combobox(tfolder_stock_frame,values=["All"]  )
@@ -307,6 +321,9 @@ class PrinterQueuBuilderGUI:
 		blacklist_filter = self.delete_blacklist_variable.get()
 		self.blacklist = [str(line[:8]).lower() for line in self.blacklist_widget.get("1.0","end-1c").splitlines() if len(line) >= 8]
 		
+		rvw_filter = self.rvw_filter.get()
+		backend_filter = self.backend_filter.get()
+		
 		if self.normalize_quantities_variable.get():
 			self.table_columns["Quantity"] = "normalized_quantity"
 			"Quantity"
@@ -327,6 +344,12 @@ class PrinterQueuBuilderGUI:
 		if frost_filter != -1:
 			print("we entered frost filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("frost") == frost_filter]
+		if rvw_filter != -1:
+			print("we entered rvw availability filter")
+			self.filtered_data = [data_row for data_row in self.filtered_data if (data_row.get("stock_folder")!=None) == rvw_filter]
+		if backend_filter != -1:
+			print("we entered backend availability filter")
+			self.filtered_data = [data_row for data_row in self.filtered_data if (data_row.get("stock_backend")!=None) == backend_filter]
 		if backend_stock != "":
 			print("we entered backend filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("stock_backend") == backend_stock]
