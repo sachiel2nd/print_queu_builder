@@ -23,15 +23,16 @@ class PrinterQueuBuilderGUI:
 		self.merged_data = {}
 		self.filtered_data = []
 		self.blacklist = ["91782P01"]
-		self.quantity_keyword = "quantity"
 		self.sales_keyword = "sales_01months"
 		self.projection_keyword = "sales_01months"
 		self.sale_keywords = {"01 months":"sales_01months", "03 months":"sales_03months", "06 months":"sales_06months", "12 months":"sales_12months", "18 months":"sales_18months"}
+		self.sorting_column = "Quantity"
+		self.sorting_asc = False
 		
 		self.table_columns = {
 			"Code":"reference",
 			"Quantity":"quantity",
-			"Sales":"sales_01months",
+			"Sales":"sales",
 			"Projection":"projection",
 			"Tdrive Stock":"stock_folder",
 			"Backend Stock":"stock_backend",
@@ -279,10 +280,18 @@ class PrinterQueuBuilderGUI:
 		self.update_table()
 	
 	def header_click(self, column_name):
-		if column_name in ["Quantity", "Sales","Projection"]:
-			self.filtered_data.sort(key=lambda x: self.sorting_function(x,column_name)  )
+		if column_name in self.table_columns.keys():
+			
+			if self.sorting_column == column_name:
+				self.sorting_asc = not self.sorting_asc
+			else:
+				self.sorting_asc = False
+			
+			self.sorting_column = column_name
+			
+			self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns[column_name]),reverse=self.sorting_asc  )
 			self.update_table()
-			print("header clicked! ", column_name)
+			print("header clicked! ", column_name," | ",self.table_columns[column_name] )
 		
 	
 	def filter_data(self):
@@ -299,9 +308,10 @@ class PrinterQueuBuilderGUI:
 		self.blacklist = [str(line[:8]).lower() for line in self.blacklist_widget.get("1.0","end-1c").splitlines() if len(line) >= 8]
 		
 		if self.normalize_quantities_variable.get():
-			self.quantity_keyword = "normalized_quantity"
+			self.table_columns["Quantity"] = "normalized_quantity"
+			"Quantity"
 		else:
-			self.quantity_keyword = "quantity"
+			self.table_columns["Quantity"] =  "quantity"
 		
 		print(white_filter," | ",cmyk_filter," | ",frost_filter," | ",backend_stock," | ",tfolder_stock," | ",search_string)
 		self.filtered_data = list(self.merged_data.values())
@@ -330,7 +340,10 @@ class PrinterQueuBuilderGUI:
 			print("we entered blacklist filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("reference").lower() not in self.blacklist ]
 		
-		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.quantity_keyword)  )
+		
+		self.sorting_asc = False
+		self.sorting_column = "Quantity"
+		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Quantity"])  )
 
 		return
 		
@@ -351,12 +364,9 @@ class PrinterQueuBuilderGUI:
 			white = data_row.get("white")
 			frost = data_row.get("frost")
 			gloss = data_row.get("gloss")
-			quantity = data_row.get(self.quantity_keyword)
-			sales = data_row.get(self.sales_keyword)
-			try: 
-				projection = int(data_row.get(self.quantity_keyword)) - int(data_row.get(self.projection_keyword))
-			except:
-				projection = None
+			quantity = data_row.get(self.table_columns["Quantity"])
+			sales = data_row.get("sales")
+			projection = data_row.get("projection")
 			
 			if code.lower() in self.blacklist:
 				mytag = "blacklisted"
@@ -373,9 +383,9 @@ class PrinterQueuBuilderGUI:
 			self.search_result_widget.insert("", "end", values=values_tuples, tags=mytag)
 			
 			counter +=1
-			if counter >= 50: break
-		
+			if counter >= 99: break
 		return
+		
 	def copy_selection(self, event):
 
 		tree = self.search_result_widget
@@ -393,13 +403,16 @@ class PrinterQueuBuilderGUI:
 		tree.clipboard_append(copy_text)
 		
 	def sorting_function(self, mydic, keyword):
-		row_number= mydic.get(keyword)
-		if row_number:
-			try:
-				result = int(row_number)
-			except:
-				result=10000
-		else: result = 10000
+		row_value= mydic.get(keyword)
+		try:
+			numeric_value = int(row_value)
+		except:
+			numeric_value =	100000
+		result = (
+            (row_value is None),
+            (numeric_value),
+            (row_value)
+        )
 		return result		
 
 	
