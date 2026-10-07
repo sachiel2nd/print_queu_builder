@@ -324,9 +324,12 @@ class PrinterQueuBuilderGUI:
 		rvw_filter = self.rvw_filter.get()
 		backend_filter = self.backend_filter.get()
 		
+		sales_timeframe = self.sale_keywords[self.sales_selection_widget.get()]
+		projection_timeframe = self.sale_keywords[self.projection_selection_widget.get()]
+		
+		
 		if self.normalize_quantities_variable.get():
 			self.table_columns["Quantity"] = "normalized_quantity"
-			"Quantity"
 		else:
 			self.table_columns["Quantity"] =  "quantity"
 		
@@ -362,6 +365,25 @@ class PrinterQueuBuilderGUI:
 		if blacklist_filter:
 			print("we entered blacklist filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("reference").lower() not in self.blacklist ]
+		
+		for row_dic in self.filtered_data:
+			try:
+				print(row_dic[sales_timeframe])
+				row_sales = int(row_dic[sales_timeframe])
+				row_projection_adj = int(row_dic[projection_timeframe])
+				quantity = int(row_dic[self.table_columns["Quantity"]])
+				
+				row_dic["sales"]=row_sales				
+				row_dic["projection"]= quantity-row_projection_adj
+				
+			except :
+				print("except!")
+				row_dic["sales"] = None
+				row_dic["projection"] = None
+
+				
+				
+			
 		
 		
 		self.sorting_asc = False
