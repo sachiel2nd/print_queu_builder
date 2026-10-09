@@ -83,20 +83,20 @@ class PrinterQueuBuilderGUI:
 		upper_options_frame.grid(row=2, column=3, padx=2, pady=(4,4), columnspan = 7, sticky=tk.W)
 		
 		# RVW availability
-		rvw_status_options = tk.LabelFrame(upper_options_frame, text= "RVW Filter")
+		rvw_status_options = tk.LabelFrame(upper_options_frame, text= "RVW File status")
 		rvw_status_options.grid(row=1, column=3, padx=1, pady=1, sticky=tk.E, rowspan = 4)
 		self.rvw_filter = tk.IntVar(rvw_status_options, value=-1)
 		tk.Radiobutton(rvw_status_options, text="NA", variable=self.rvw_filter, value=-1).grid(row=1, column=0, sticky=tk.W)
-		tk.Radiobutton(rvw_status_options, text="Available", variable=self.rvw_filter, value=1).grid(row=2, column=0, sticky=tk.W)
-		tk.Radiobutton(rvw_status_options, text="Unavailable", variable=self.rvw_filter, value=0).grid(row=3, column=0, sticky=tk.W)
+		tk.Radiobutton(rvw_status_options, text="Show Available", variable=self.rvw_filter, value=1).grid(row=2, column=0, sticky=tk.W)
+		tk.Radiobutton(rvw_status_options, text="Show Unavailable", variable=self.rvw_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
 		# Backend availability
-		backend_status_options = tk.LabelFrame(upper_options_frame, text= "Backend Filter")
+		backend_status_options = tk.LabelFrame(upper_options_frame, text= "Backend status")
 		backend_status_options.grid(row=1, column=4, padx=1, pady=1, sticky=tk.E, rowspan = 4)
 		self.backend_filter = tk.IntVar(backend_status_options, value=-1)
 		tk.Radiobutton(backend_status_options, text="NA", variable=self.backend_filter, value=-1).grid(row=1, column=0, sticky=tk.W)
-		tk.Radiobutton(backend_status_options, text="Available", variable=self.backend_filter, value=1).grid(row=2, column=0, sticky=tk.W)
-		tk.Radiobutton(backend_status_options, text="Unavailable", variable=self.backend_filter, value=0).grid(row=3, column=0, sticky=tk.W)
+		tk.Radiobutton(backend_status_options, text="Show Available", variable=self.backend_filter, value=1).grid(row=2, column=0, sticky=tk.W)
+		tk.Radiobutton(backend_status_options, text="Show Unavailable", variable=self.backend_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
 		# Sales options
 		sales_selection_frame = tk.LabelFrame(upper_options_frame, text= "Sales timefram")
@@ -150,15 +150,17 @@ class PrinterQueuBuilderGUI:
 		# Backend stock filter
 		backend_stock_frame = tk.LabelFrame(search_tab, text= "Backend stock")
 		backend_stock_frame.grid(row=4, column=3, padx=1, pady=1, rowspan = 2)
-		self.backend_stock_widget = ttk.Combobox(backend_stock_frame,values=["All"])
+		self.backend_stock_widget = ttk.Combobox(backend_stock_frame,values=[""], state="readonly")
 		self.backend_stock_widget.grid(row=1, column=1, padx=1, pady=1)
 		
 		# RVW stock filter
 		tfolder_stock_frame = tk.LabelFrame(search_tab, text= "Tdrive stock")
 		tfolder_stock_frame.grid(row=6, column=3, padx=1, pady=1, rowspan = 2)
-		self.tfolder_stock_widget = ttk.Combobox(tfolder_stock_frame,values=["All"]  )
+		self.tfolder_stock_widget = ttk.Combobox(tfolder_stock_frame,values=[""], state="readonly" )
 		self.tfolder_stock_widget.grid(row=5, column=1, padx=1, pady=1)
 	   
+	   
+	    # Miscellanous options
 		misc_options_frame = tk.LabelFrame(search_tab, text= "Misc")
 		misc_options_frame.grid(row=4, column=7, padx=1, pady=1, rowspan = 4, sticky=tk.E)
 		self.delete_blacklist_variable = tk.BooleanVar(value = False)
@@ -170,13 +172,14 @@ class PrinterQueuBuilderGUI:
 		normalize_quantities_widget = tk.Checkbutton(misc_options_frame, variable = self.normalize_quantities_variable, text="Normalize quantities")
 		normalize_quantities_widget.grid(row=2, column=0, padx=1, pady=1,sticky=tk.W)
 		
-		
+		# Tree View / search results
 		self.search_result_widget = ttk.Treeview(search_tab, columns=tuple(self.table_columns.keys()), show="headings")
 		self.search_result_widget.grid(row=8, column=1,  padx=1, pady=5, columnspan = 7, sticky="ns")
 		self.search_result_widget.bind("<Control-c>", self.copy_selection)
 		
 		for col in self.table_columns:
 			self.search_result_widget.heading(column=col, text=col, command=lambda c=col: self.header_click(c))
+			self.search_result_widget.column(col, width=120, anchor="center")
 		#self.search_result_widget.insert(self.search_result_widget, 1, ("mytext","mytext2","mytext3") )
 		
 	def dummy_function(self):
@@ -220,7 +223,7 @@ class PrinterQueuBuilderGUI:
 			self.rvw_directory.configure(style = "Button_red.TButton")
 		print(list(rvws_stocks.keys()))
 		#self.tfolder_stock_widget.config(values=list(rvws_stocks.keys()).sort())
-		self.tfolder_stock_widget["values"] = sorted(list(rvws_stocks.keys()))
+		self.tfolder_stock_widget["values"] = [""] + sorted(list(rvws_stocks.keys()))
 		self.merge_dictionaries()
 	
 	def get_csv(self):
@@ -256,7 +259,7 @@ class PrinterQueuBuilderGUI:
 				if self.inventory_numbers: print(next(iter(self.inventory_numbers.values())))
 #		except:
 #			print("failed to open file")
-		self.backend_stock_widget["values"] = sorted(list(backend_stock.keys()))
+		self.backend_stock_widget["values"] = [""] + sorted(list(backend_stock.keys()))
 		if self.inventory_numbers: 
 			self.inventory_file.configure(style = "Button_green.TButton")
 		else:
@@ -368,7 +371,6 @@ class PrinterQueuBuilderGUI:
 		
 		for row_dic in self.filtered_data:
 			try:
-				print(row_dic[sales_timeframe])
 				row_sales = int(row_dic[sales_timeframe])
 				row_projection_adj = int(row_dic[projection_timeframe])
 				quantity = int(row_dic[self.table_columns["Quantity"]])
@@ -377,15 +379,10 @@ class PrinterQueuBuilderGUI:
 				row_dic["projection"]= quantity-row_projection_adj
 				
 			except :
-				print("except!")
 				row_dic["sales"] = None
 				row_dic["projection"] = None
 
-				
-				
-			
-		
-		
+
 		self.sorting_asc = False
 		self.sorting_column = "Quantity"
 		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Quantity"])  )
