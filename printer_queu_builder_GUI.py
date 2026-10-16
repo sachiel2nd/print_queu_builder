@@ -126,6 +126,17 @@ class PrinterQueuBuilderGUI:
 		self.sales_selection_widget.set(list(self.sale_keywords.keys())[0])
 		self.sales_selection_widget.grid(row=1, column=1, padx=1, pady=1)
 		
+		# Miscellanous options
+		misc_options_frame = tk.LabelFrame(self.upper_options_frame, text= "Misc")
+		misc_options_frame.grid(row=1, column=5, padx=1, pady=1, rowspan = 4, sticky=tk.E)
+		self.delete_blacklist_variable = tk.BooleanVar(value = False)
+		delete_blacklist_q = tk.Checkbutton(misc_options_frame, variable = self.delete_blacklist_variable, text="Delete blacklisted codes")
+		delete_blacklist_q.grid(row=0, column=0, padx=1, pady=1,sticky=tk.W)
+		ignore_nofiles_q = tk.Checkbutton(misc_options_frame, text="placeholder")
+		ignore_nofiles_q.grid(row=1, column=0, padx=1, pady=1,sticky=tk.W)
+		self.normalize_quantities_variable = tk.BooleanVar()
+		normalize_quantities_widget = tk.Checkbutton(misc_options_frame, variable = self.normalize_quantities_variable, text="Normalize quantities")
+		normalize_quantities_widget.grid(row=2, column=0, padx=1, pady=1,sticky=tk.W)
 		
 		##### LOWER OPTIONS #####
 		
@@ -155,7 +166,15 @@ class PrinterQueuBuilderGUI:
 		tk.Radiobutton(cmyk_options, text="NA", variable=self.cmyk_filter, value=-1).grid(row=1, column=0, sticky=tk.W)
 		tk.Radiobutton(cmyk_options, text="Yes", variable=self.cmyk_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(cmyk_options, text="No", variable=self.cmyk_filter, value=0).grid(row=3, column=0, sticky=tk.W)
-			
+		
+		# gloss filter
+		gloss_options = tk.LabelFrame(self.lower_options_frame, text= "Gloss filter")
+		gloss_options.grid(row=1, column=5, padx=1, pady=1, rowspan = 4, sticky=tk.E)
+		self.gloss_filter = tk.IntVar(cmyk_options, value=-1)
+		tk.Radiobutton(gloss_options, text="NA", variable=self.gloss_filter, value=-1).grid(row=1, column=0, sticky=tk.W)
+		tk.Radiobutton(gloss_options, text="Yes", variable=self.gloss_filter, value=1).grid(row=2, column=0, sticky=tk.W)
+		tk.Radiobutton(gloss_options, text="No", variable=self.gloss_filter, value=0).grid(row=3, column=0, sticky=tk.W)
+		
 		# Backend stock filter
 		backend_stock_frame = tk.LabelFrame(self.lower_options_frame, text= "Backend stock")
 		backend_stock_frame.grid(row=1, column=1, padx=1, pady=1, rowspan = 2)
@@ -169,17 +188,7 @@ class PrinterQueuBuilderGUI:
 		self.tfolder_stock_widget.grid(row=1, column=1, padx=1, pady=1)
 	   
 	   
-	    # Miscellanous options
-		misc_options_frame = tk.LabelFrame(self.lower_options_frame, text= "Misc")
-		misc_options_frame.grid(row=1, column=5, padx=1, pady=1, rowspan = 4, sticky=tk.E)
-		self.delete_blacklist_variable = tk.BooleanVar(value = False)
-		delete_blacklist_q = tk.Checkbutton(misc_options_frame, variable = self.delete_blacklist_variable, text="Delete blacklisted codes")
-		delete_blacklist_q.grid(row=0, column=0, padx=1, pady=1,sticky=tk.W)
-		ignore_nofiles_q = tk.Checkbutton(misc_options_frame, text="placeholder")
-		ignore_nofiles_q.grid(row=1, column=0, padx=1, pady=1,sticky=tk.W)
-		self.normalize_quantities_variable = tk.BooleanVar()
-		normalize_quantities_widget = tk.Checkbutton(misc_options_frame, variable = self.normalize_quantities_variable, text="Normalize quantities")
-		normalize_quantities_widget.grid(row=2, column=0, padx=1, pady=1,sticky=tk.W)
+	    
 		
 		# Tree View / search results
 		self.search_result_widget = ttk.Treeview(search_tab, columns=tuple(self.table_columns.keys()), show="headings")
@@ -347,6 +356,7 @@ class PrinterQueuBuilderGUI:
 		white_filter = self.white_filter.get()
 		cmyk_filter = self.cmyk_filter.get()
 		frost_filter = self.frost_filter.get()
+		gloss_filter = self.gloss_filter.get()
 		
 		backend_stock = self.backend_stock_widget.get()
 		tfolder_stock = self.tfolder_stock_widget.get()
@@ -377,10 +387,12 @@ class PrinterQueuBuilderGUI:
 		if cmyk_filter != -1:
 			print("we entered cmyk filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("cmyk") == cmyk_filter]
-		
 		if frost_filter != -1:
 			print("we entered frost filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("frost") == frost_filter]
+		if gloss_filter != -1:
+			print("we entered gloss filter")
+			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("gloss") == gloss_filter]
 		if rvw_filter != -1:
 			print("we entered rvw availability filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if (data_row.get("stock_folder")!=None) == rvw_filter]
