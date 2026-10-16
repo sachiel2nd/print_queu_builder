@@ -24,7 +24,6 @@ class PrinterQueuBuilderGUI:
 		self.filtered_data = []
 		self.blacklist = ["91782P01"]
 		self.sales_keyword = "sales_01months"
-		self.projection_keyword = "sales_01months"		
 		self.sorting_column = "Quantity"
 		self.sorting_asc = False
 		self.advance_options = False
@@ -84,9 +83,15 @@ class PrinterQueuBuilderGUI:
 		self.inventory_file = ttk.Button(search_tab, text = "Invetory File", command= self.get_csv)
 		self.inventory_file.grid(row=2, column=2, padx=2, pady=(4,4), sticky=tk.NW)
 		
+		total_prints_needed_frame = tk.LabelFrame(search_tab, text= "Net projections: 6 Years")
+		total_prints_needed_frame.grid(row=2, column=4, padx=1, pady=1, sticky=tk.W)
+		self.total_prints_needed_widget=tk.Label(total_prints_needed_frame, text="0")
+		self.total_prints_needed_widget.grid(row=1, column=1)
+		
+		
 		# Search text filter
 		self.search_widget = tk.Entry(search_tab)
-		self.search_widget.grid(row=5, column=1, padx=4, pady=4, sticky="ew", columnspan = 2)
+		self.search_widget.grid(row=5, column=1, padx=4, pady=4, sticky="ew", columnspan = 3)
 		self.search_widget.bind("<Return>", self.automatic_search)
 		
 		self.search_button = ttk.Button(search_tab, text = "Search", command= self.do_search)
@@ -101,7 +106,7 @@ class PrinterQueuBuilderGUI:
 		#self.upper_options_frame.grid(row=2, column=3, padx=2, pady=(4,4), columnspan = 5, sticky=tk.W)
 		
 		self.toggle_btn = tk.Button(search_tab, text="...",bd=0, command= self.toggle_advance_options)
-		self.toggle_btn.grid(row=2, column=4, sticky="ne")
+		self.toggle_btn.grid(row=2, column=5, sticky="ne")
 		
 		# RVW availability
 		rvw_status_options = tk.LabelFrame(self.upper_options_frame, text= "RVW File status")
@@ -141,7 +146,7 @@ class PrinterQueuBuilderGUI:
 		##### LOWER OPTIONS #####
 		
 		self.lower_options_frame = tk.Frame(search_tab)
-		self.lower_options_frame.grid(row=4, column=3, columnspan=2, rowspan = 4, sticky=tk.W)
+		self.lower_options_frame.grid(row=4, column=4, columnspan=2, rowspan = 4, sticky=tk.W)
 		
 		# White Filter
 		white_options = tk.LabelFrame(self.lower_options_frame, text= "White filter")
@@ -192,7 +197,7 @@ class PrinterQueuBuilderGUI:
 		
 		# Tree View / search results
 		self.search_result_widget = ttk.Treeview(search_tab, columns=tuple(self.table_columns.keys()), show="headings")
-		self.search_result_widget.grid(row=8, column=1,  padx=1, pady=5, columnspan = 4, sticky="ns")
+		self.search_result_widget.grid(row=8, column=1,  padx=1, pady=5, columnspan = 5, sticky="ns")
 		self.search_result_widget.bind("<Control-c>", self.copy_selection)
 		
 		for col in self.table_columns:
@@ -248,6 +253,7 @@ class PrinterQueuBuilderGUI:
 		print(folder_path)
 		self.inventory_numbers = {}
 		backend_stock = {}
+		total_needed = 0
 		if not folder_path:
 			self.inventory_file.configure(style = "Button_red.TButton")
 			return
@@ -290,8 +296,12 @@ class PrinterQueuBuilderGUI:
 					weighted_36m = sales_06m + sales_12m + sales_18m
 					self.inventory_numbers[reference]["sales_12months_weighted"] = (weighted_36m + 2) // 3
 					self.inventory_numbers[reference]["sales_36months_weighted"] = weighted_36m
-	
+					
+					
+					if weighted_36m > self.inventory_numbers[reference]["normalized_quantity"]:
+						total_needed -= weighted_36m*2 - self.inventory_numbers[reference]["normalized_quantity"]
 			
+		self.total_prints_needed_widget.configure(text=total_needed)
 		self.backend_stock_widget["values"] = [""] + sorted(list(backend_stock.keys()))
 		if self.inventory_numbers: 
 			self.inventory_file.configure(style = "Button_green.TButton")
@@ -349,7 +359,7 @@ class PrinterQueuBuilderGUI:
 			self.upper_options_frame.grid_remove()
 			self.advance_options = False
 		else:
-			self.upper_options_frame.grid(row=2, column=3, padx=2, pady=(4,4), sticky=tk.W)
+			self.upper_options_frame.grid(row=2, column=4, padx=2, pady=(4,4), sticky=tk.W)
 			self.advance_options = True
 		
 	def filter_data(self):
@@ -383,7 +393,6 @@ class PrinterQueuBuilderGUI:
 		if white_filter != -1:
 			print("we entered white filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("white") == white_filter]
-		
 		if cmyk_filter != -1:
 			print("we entered cmyk filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("cmyk") == cmyk_filter]
@@ -427,9 +436,10 @@ class PrinterQueuBuilderGUI:
 
 
 		self.sorting_asc = False
-		self.sorting_column = "Quantity"
+		self.sorting_column = "Priority"
 		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Quantity"])  )
-
+		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Priority"])  )
+		
 		return
 		
 				
@@ -452,7 +462,7 @@ class PrinterQueuBuilderGUI:
 			quantity = data_row.get(self.table_columns["Quantity"])
 			sales = data_row.get("sales")
 			projection = data_row.get("projection")
-			priority = 1
+			priority = data_row.get("priority")
 			
 			if code.lower() in self.blacklist:
 				mytag = "blacklisted"
