@@ -126,13 +126,6 @@ class PrinterQueuBuilderGUI:
 		self.sales_selection_widget.set(list(self.sale_keywords.keys())[0])
 		self.sales_selection_widget.grid(row=1, column=1, padx=1, pady=1)
 		
-		# Projection options
-		projection_selection_frame = tk.LabelFrame(self.upper_options_frame, text= "Projection Timeframe")
-		projection_selection_frame.grid(row=3, column=1, padx=1, pady=1, rowspan = 2)
-		self.projection_selection_widget = ttk.Combobox(projection_selection_frame,values=list(self.sale_keywords.keys()), state="readonly" )
-		self.projection_selection_widget.set(list(self.sale_keywords.keys())[0])
-		self.projection_selection_widget.grid(row=1, column=1, padx=1, pady=1)
-		
 		
 		##### LOWER OPTIONS #####
 		
@@ -271,9 +264,25 @@ class PrinterQueuBuilderGUI:
 					else:
 						self.inventory_numbers[reference]["normalized_quantity"] = quantity
 					backend_stock[myentry["stock_backend"]] = True
-				if self.inventory_numbers: print(next(iter(self.inventory_numbers.values())))
-#		except:
-#			print("failed to open file")
+					
+					try:
+						sales_06m = int(myentry["sales_06months"])
+					except:
+						sales_06m = 0
+					try:
+						sales_12m = int(myentry["sales_12months"])
+					except:
+						sales_12m = 0
+					try:
+						sales_18m = int(myentry["sales_18months"])
+					except:
+						sales_18m = 0
+						
+					weighted_36m = sales_06m + sales_12m + sales_18m
+					self.inventory_numbers[reference]["sales_12months_weighted"] = (weighted_36m + 2) // 3
+					self.inventory_numbers[reference]["sales_36months_weighted"] = weighted_36m
+	
+			
 		self.backend_stock_widget["values"] = [""] + sorted(list(backend_stock.keys()))
 		if self.inventory_numbers: 
 			self.inventory_file.configure(style = "Button_green.TButton")
@@ -351,7 +360,6 @@ class PrinterQueuBuilderGUI:
 		backend_filter = self.backend_filter.get()
 		
 		sales_timeframe = self.sale_keywords[self.sales_selection_widget.get()]
-		projection_timeframe = self.sale_keywords[self.projection_selection_widget.get()]
 		
 		
 		if self.normalize_quantities_variable.get():
@@ -395,14 +403,14 @@ class PrinterQueuBuilderGUI:
 		for row_dic in self.filtered_data:
 			try:
 				row_sales = int(row_dic[sales_timeframe])
-				row_projection_adj = int(row_dic[projection_timeframe])
 				quantity = int(row_dic[self.table_columns["Quantity"]])
+				normalized_quantity = int(row_dic["normalized_quantity"])
 				
 				row_dic["sales"]=row_sales				
-				row_dic["projection"]= quantity-row_projection_adj
+				row_dic["projection"]= normalized_quantity-row_sales
 				
 			except :
-				row_dic["sales"] = None
+				row_dic["sales"] = "exception!"
 				row_dic["projection"] = None
 
 
@@ -432,6 +440,7 @@ class PrinterQueuBuilderGUI:
 			quantity = data_row.get(self.table_columns["Quantity"])
 			sales = data_row.get("sales")
 			projection = data_row.get("projection")
+			priority = 1
 			
 			if code.lower() in self.blacklist:
 				mytag = "blacklisted"
@@ -444,7 +453,7 @@ class PrinterQueuBuilderGUI:
 			else:
 				mytag = "normal_odd"
 			
-			values_tuples = tuple(( "" if y is None else y) for y in  [code,quantity,sales, projection, tdrive_stock,backend_stock,cmyk,white,frost,gloss])
+			values_tuples = tuple(( "" if y is None else y) for y in  [code,priority,quantity,sales, projection, tdrive_stock,backend_stock,cmyk,white,frost,gloss])
 			self.search_result_widget.insert("", "end", values=values_tuples, tags=mytag)
 			
 			counter +=1
