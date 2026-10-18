@@ -263,43 +263,17 @@ class PrinterQueuBuilderGUI:
 				for myentry in predata:
 					reference = myentry["reference"]
 					self.inventory_numbers[reference] = myentry
-					try: 
-						quantity = int(myentry.get("quantity"))
-					except:
-						quantity = None
-	
-					if quantity == None:
-						self.inventory_numbers[reference]["normalized_quantity"] = None
-					elif quantity > 49000:
-						self.inventory_numbers[reference]["normalized_quantity"] = quantity - 50000
-					elif quantity > 9000:
-						self.inventory_numbers[reference]["normalized_quantity"] = quantity - 10000
-					elif quantity > 4000:
-						self.inventory_numbers[reference]["normalized_quantity"] = quantity - 5000
-					else:
-						self.inventory_numbers[reference]["normalized_quantity"] = quantity
 					backend_stock[myentry["stock_backend"]] = True
 					
 					try:
-						sales_06m = int(myentry["sales_06months"])
+						weighted_36m = int(self.inventory_numbers[reference]["sales_36months_weighted"])
+						normalized_q = int(self.inventory_numbers[reference]["normalized_quantity"])
 					except:
-						sales_06m = 0
-					try:
-						sales_12m = int(myentry["sales_12months"])
-					except:
-						sales_12m = 0
-					try:
-						sales_18m = int(myentry["sales_18months"])
-					except:
-						sales_18m = 0
+						weighted_36m = 0
+						normalized_q = 0
 						
-					weighted_36m = sales_06m + sales_12m + sales_18m
-					self.inventory_numbers[reference]["sales_12months_weighted"] = (weighted_36m + 2) // 3
-					self.inventory_numbers[reference]["sales_36months_weighted"] = weighted_36m
-					
-					
-					if weighted_36m > self.inventory_numbers[reference]["normalized_quantity"]:
-						total_needed -= weighted_36m*2 - self.inventory_numbers[reference]["normalized_quantity"]
+					if 2*weighted_36m > normalized_q:
+						total_needed -= weighted_36m*2 - normalized_q
 			
 		self.total_prints_needed_widget.configure(text=total_needed)
 		self.backend_stock_widget["values"] = [""] + sorted(list(backend_stock.keys()))
@@ -430,14 +404,14 @@ class PrinterQueuBuilderGUI:
 				row_dic["sales"]=row_sales				
 				row_dic["projection"]= normalized_quantity-row_sales
 				
-			except :
-				row_dic["sales"] = "exception!"
+			except:
+				row_dic["sales"] = "Na"
 				row_dic["projection"] = None
 
 
 		self.sorting_asc = False
 		self.sorting_column = "Priority"
-		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Quantity"])  )
+		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Projection"])  )
 		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Priority"])  )
 		
 		return
