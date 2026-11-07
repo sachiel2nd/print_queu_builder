@@ -19,26 +19,55 @@ class PrinterQueuBuilderGUI:
 		
 		
 		self.rvws_data = {}
-		self.inventory_numbers = {}
+		self.backend_data = {}
 		self.merged_data = {}
 		self.filtered_data = []
 		self.blacklist = ["91782P01"]
-		self.sales_keyword = "sales_01months"
+		self.default_timeframe = "01 years"
 		self.sorting_column = "Quantity"
 		self.sorting_asc = False
 		self.advance_options = False
+		self.weighted_sales_keywords = {
+			"01 months":"sales_01months_weighted",
+			"03 months":"sales_03months_weighted",
+			"06 months":"sales_06months_weighted",
+			"01 years":"sales_01years_weighted",
+			"02 years":"sales_02years_weighted",
+			"03 years":"sales_03years_weighted",
+			"04 years":"sales_04years_weighted",
+			"05 years":"sales_05years_weighted",
+			"06 years":"sales_06years_weighted"
+			}
+		self.projection_keywords = {
+			"01 months":"projection_01months",
+			"03 months":"projection_03months",
+			"06 months":"projection_06months",
+			"01 years":"projection_01years",
+			"02 years":"projection_02years",
+			"03 years":"projection_03years",
+			"04 years":"projection_04years",
+			"05 years":"projection_05years",
+			"06 years":"projection_06years"
+			}
 		self.sale_keywords = {
-			"12 months weighted":"sales_12months_weighted",
-			"36 months weighted":"sales_36months_weighted",
 			"01 months":"sales_01months",
 			"03 months":"sales_03months",
 			"06 months":"sales_06months",
-			"12 months":"sales_12months",
+			"01 years":"sales_12months",
 			"18 months":"sales_18months"
+			}
+		self.total_needed = {
+			"01 years":0,
+			"02 years":0,
+			"03 years":0,
+			"04 years":0,
+			"05 years":0,
+			"06 years":0
 			}
 		
 		self.table_columns = {
 			"Code":"reference",
+			"Name":"name",
 			"Priority":"priority",
 			"Quantity":"quantity",
 			"Sales":"sales",
@@ -83,9 +112,9 @@ class PrinterQueuBuilderGUI:
 		self.inventory_file = ttk.Button(search_tab, text = "Invetory File", command= self.get_csv)
 		self.inventory_file.grid(row=2, column=2, padx=2, pady=(4,4), sticky=tk.NW)
 		
-		total_prints_needed_frame = tk.LabelFrame(search_tab, text= "Net projections: 6 Years")
-		total_prints_needed_frame.grid(row=2, column=4, padx=1, pady=1, sticky=tk.W)
-		self.total_prints_needed_widget=tk.Label(total_prints_needed_frame, text="0")
+		self.total_prints_needed_frame = tk.LabelFrame(search_tab, text= "Net projections: "+ self.default_timeframe)
+		self.total_prints_needed_frame.grid(row=2, column=4, padx=1, pady=1, sticky=tk.W)
+		self.total_prints_needed_widget=tk.Label(self.total_prints_needed_frame, text="0")
 		self.total_prints_needed_widget.grid(row=1, column=1)
 		
 		
@@ -124,12 +153,7 @@ class PrinterQueuBuilderGUI:
 		tk.Radiobutton(backend_status_options, text="Show Available", variable=self.backend_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(backend_status_options, text="Show Unavailable", variable=self.backend_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
-		# Sales options
-		sales_selection_frame = tk.LabelFrame(self.upper_options_frame, text= "Sales timefram")
-		sales_selection_frame.grid(row=1, column=1, padx=1, pady=1, rowspan = 2)
-		self.sales_selection_widget = ttk.Combobox(sales_selection_frame,values=list(self.sale_keywords.keys()), state="readonly"  )
-		self.sales_selection_widget.set(list(self.sale_keywords.keys())[0])
-		self.sales_selection_widget.grid(row=1, column=1, padx=1, pady=1)
+		
 		
 		# Miscellanous options
 		misc_options_frame = tk.LabelFrame(self.upper_options_frame, text= "Misc")
@@ -148,6 +172,26 @@ class PrinterQueuBuilderGUI:
 		self.lower_options_frame = tk.Frame(search_tab)
 		self.lower_options_frame.grid(row=4, column=4, columnspan=2, rowspan = 4, sticky=tk.W)
 		
+		# Sales timeframe options
+		sales_selection_frame = tk.LabelFrame(self.lower_options_frame, text= "Sales/Project timeframe")
+		sales_selection_frame.grid(row=1, column=1, padx=1, pady=1, rowspan = 2)
+		self.sales_selection_widget = ttk.Combobox(sales_selection_frame, values=list(self.weighted_sales_keywords.keys()) , state="readonly"  )
+		self.sales_selection_widget.set(self.default_timeframe)
+		self.sales_selection_widget.grid(row=1, column=1, padx=1, pady=1)
+		
+		# Backend stock filter
+		backend_stock_frame = tk.LabelFrame(self.lower_options_frame, text= "Backend stock")
+		backend_stock_frame.grid(row=3, column=1, padx=1, pady=1, rowspan = 2)
+		self.backend_stock_widget = ttk.Combobox(backend_stock_frame,values=[""], state="readonly")
+		self.backend_stock_widget.grid(row=1, column=1, padx=1, pady=1)
+		
+		
+		# RVW stock filter
+		#tfolder_stock_frame = tk.LabelFrame(self.lower_options_frame, text= "Tdrive stock")
+		#tfolder_stock_frame.grid(row=3, column=1, padx=1, pady=1, rowspan = 2)
+		#self.tfolder_stock_widget = ttk.Combobox(tfolder_stock_frame,values=[""], state="readonly" )
+		#self.tfolder_stock_widget.grid(row=1, column=1, padx=1, pady=1)
+	   
 		# White Filter
 		white_options = tk.LabelFrame(self.lower_options_frame, text= "White filter")
 		white_options.grid(row=1, column=2, padx=1, pady=1, rowspan = 4, sticky=tk.E)
@@ -180,18 +224,7 @@ class PrinterQueuBuilderGUI:
 		tk.Radiobutton(gloss_options, text="Yes", variable=self.gloss_filter, value=1).grid(row=2, column=0, sticky=tk.W)
 		tk.Radiobutton(gloss_options, text="No", variable=self.gloss_filter, value=0).grid(row=3, column=0, sticky=tk.W)
 		
-		# Backend stock filter
-		backend_stock_frame = tk.LabelFrame(self.lower_options_frame, text= "Backend stock")
-		backend_stock_frame.grid(row=1, column=1, padx=1, pady=1, rowspan = 2)
-		self.backend_stock_widget = ttk.Combobox(backend_stock_frame,values=[""], state="readonly")
-		self.backend_stock_widget.grid(row=1, column=1, padx=1, pady=1)
 		
-		# RVW stock filter
-		tfolder_stock_frame = tk.LabelFrame(self.lower_options_frame, text= "Tdrive stock")
-		tfolder_stock_frame.grid(row=3, column=1, padx=1, pady=1, rowspan = 2)
-		self.tfolder_stock_widget = ttk.Combobox(tfolder_stock_frame,values=[""], state="readonly" )
-		self.tfolder_stock_widget.grid(row=1, column=1, padx=1, pady=1)
-	   
 	   
 	    
 		
@@ -245,15 +278,25 @@ class PrinterQueuBuilderGUI:
 		else:
 			self.rvw_directory.configure(style = "Button_red.TButton")
 		
-		self.tfolder_stock_widget["values"] = [""] + sorted(list(rvws_stocks.keys()))
+		#self.tfolder_stock_widget["values"] = [""] + sorted(list(rvws_stocks.keys()))
 		self.merge_dictionaries()
 	
 	def get_csv(self):
 		folder_path = tk.filedialog.askopenfilename(title="cvs file", filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")])
 		print(folder_path)
-		self.inventory_numbers = {}
+		self.backend_data = {}
 		backend_stock = {}
-		total_needed = 0
+		self.total_needed = {
+			"01 months":0,
+			"03 months":0,
+			"06 months":0,
+			"01 years":0,
+			"02 years":0,
+			"03 years":0,
+			"04 years":0,
+			"05 years":0,
+			"06 years":0
+			}
 		if not folder_path:
 			self.inventory_file.configure(style = "Button_red.TButton")
 			return
@@ -262,22 +305,29 @@ class PrinterQueuBuilderGUI:
 				predata = csv.DictReader(file, delimiter=';')
 				for myentry in predata:
 					reference = myentry["reference"]
-					self.inventory_numbers[reference] = myentry
+					self.backend_data[reference] = myentry
 					backend_stock[myentry["stock_backend"]] = True
 					
 					try:
-						weighted_36m = int(self.inventory_numbers[reference]["sales_36months_weighted"])
-						normalized_q = int(self.inventory_numbers[reference]["normalized_quantity"])
+						normalized_q = int(self.backend_data[reference]["normalized_quantity"])
 					except:
-						weighted_36m = 0
 						normalized_q = 0
+					for timeframe in self.total_needed:
+						try:   
+							weighted_sales = int(self.backend_data[reference][self.weighted_sales_keywords.get(timeframe)])
+							self.backend_data[reference][self.projection_keywords.get(timeframe)]= normalized_q-weighted_sales
+
+						except:
+							weighted_sales = 0
+							self.backend_data[reference][self.projection_keywords.get(timeframe)]= None
 						
-					if 2*weighted_36m > normalized_q:
-						total_needed -= weighted_36m*2 - normalized_q
-			
-		self.total_prints_needed_widget.configure(text=total_needed)
+						if weighted_sales > normalized_q:
+							self.total_needed[timeframe] -= weighted_sales - normalized_q
+
+		
+		self.total_prints_needed_widget.configure(text=self.total_needed[self.default_timeframe])
 		self.backend_stock_widget["values"] = [""] + sorted(list(backend_stock.keys()))
-		if self.inventory_numbers: 
+		if self.backend_data: 
 			self.inventory_file.configure(style = "Button_green.TButton")
 		else:
 			self.inventory_file.configure(style = "Button_red.TButton")
@@ -291,19 +341,19 @@ class PrinterQueuBuilderGUI:
 			print("value accepted")
 			
 			self.merged_data = self.rvws_data.copy()
-			for key in self.inventory_numbers:
+			for key in self.backend_data:
 				
 				if key in self.merged_data:
-					self.merged_data[key] = self.merged_data[key]|self.inventory_numbers[key]
+					self.merged_data[key] = self.merged_data[key]|self.backend_data[key]
 					n+=1
 				else:
-					self.merged_data[key] = self.inventory_numbers[key]
+					self.merged_data[key] = self.backend_data[key]
 					m+=1
 		else:
 			print("no input")	
 		if self.merged_data: print(list(self.merged_data.keys())[0],list(self.merged_data.values())[0],)
 		print("n= ",n,"  m= ",m)
-		print("rvw= ",len(self.rvws_data),"  inventory_file= ",len(self.inventory_numbers), "  merged= ",len(self.merged_data))
+		print("rvw= ",len(self.rvws_data),"  inventory_file= ",len(self.backend_data), "  merged= ",len(self.merged_data))
 	
 	def do_search(self):
 		self.filter_data()
@@ -343,7 +393,7 @@ class PrinterQueuBuilderGUI:
 		gloss_filter = self.gloss_filter.get()
 		
 		backend_stock = self.backend_stock_widget.get()
-		tfolder_stock = self.tfolder_stock_widget.get()
+		#tfolder_stock = self.tfolder_stock_widget.get()
 		
 		search_string = self.search_widget.get()
 		
@@ -353,7 +403,7 @@ class PrinterQueuBuilderGUI:
 		rvw_filter = self.rvw_filter.get()
 		backend_filter = self.backend_filter.get()
 		
-		sales_timeframe = self.sale_keywords[self.sales_selection_widget.get()]
+		sales_timeframe = self.sales_selection_widget.get()
 		
 		
 		if self.normalize_quantities_variable.get():
@@ -361,7 +411,7 @@ class PrinterQueuBuilderGUI:
 		else:
 			self.table_columns["Quantity"] =  "quantity"
 		
-		print(white_filter," | ",cmyk_filter," | ",frost_filter," | ",backend_stock," | ",tfolder_stock," | ",search_string)
+		print(white_filter," | ",cmyk_filter," | ",frost_filter," | ",backend_stock," | ",search_string) ## tfolder_stock," | ",
 		self.filtered_data = list(self.merged_data.values())
 		
 		if white_filter != -1:
@@ -385,9 +435,9 @@ class PrinterQueuBuilderGUI:
 		if backend_stock != "":
 			print("we entered backend filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("stock_backend") == backend_stock]
-		if tfolder_stock != "":
-			print("we entered tdrive filter")
-			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("stock_folder") == tfolder_stock]
+		#if tfolder_stock != "":
+		#	print("we entered tdrive filter")
+		#	self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("stock_folder") == tfolder_stock]
 		if search_string != "":
 			print("we search pattern filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if search_string.lower() in data_row.get("reference").lower() ]
@@ -395,20 +445,25 @@ class PrinterQueuBuilderGUI:
 			print("we entered blacklist filter")
 			self.filtered_data = [data_row for data_row in self.filtered_data if data_row.get("reference").lower() not in self.blacklist ]
 		
-		for row_dic in self.filtered_data:
-			try:
-				row_sales = int(row_dic[sales_timeframe])
-				quantity = int(row_dic[self.table_columns["Quantity"]])
-				normalized_quantity = int(row_dic["normalized_quantity"])
-				
-				row_dic["sales"]=row_sales				
-				row_dic["projection"]= normalized_quantity-row_sales
-				
-			except:
-				row_dic["sales"] = "Na"
-				row_dic["projection"] = None
+		#for row_dic in self.filtered_data:
+			#try:
+			#	row_sales = int(row_dic[sales_timeframe])
+			#	row_sales = int(row_dic[sales_timeframe])
+			#	quantity = int(row_dic[self.table_columns["Quantity"]])
+			#	normalized_quantity = int(row_dic["normalized_quantity"])
+			#	
+			#	row_dic["sales"]=row_sales				
+			#	row_dic["projection"]= normalized_quantity-row_sales
+			#	
+			#except:
+			#	row_dic["sales"] = "Na"
+			#	row_dic["projection"] = None
 
 
+		self.table_columns["Sales"]= self.sale_keywords.get(sales_timeframe)
+		self.table_columns["Projection"]= self.projection_keywords.get(sales_timeframe)
+		self.total_prints_needed_widget.configure(text= str(self.total_needed.get(sales_timeframe)))
+		self.total_prints_needed_frame.configure(text="Net projections: "+ sales_timeframe)
 		self.sorting_asc = False
 		self.sorting_column = "Priority"
 		self.filtered_data.sort(key=lambda x: self.sorting_function(x,self.table_columns["Projection"])  )
@@ -425,8 +480,10 @@ class PrinterQueuBuilderGUI:
 		self.search_result_widget.tag_configure("blacklisted", background="#777777")
 		self.search_result_widget.tag_configure("duplicated", background="#FF7F7F")
 		
+		
 		for data_row in self.filtered_data:
 			code = data_row.get("reference")
+			name = data_row.get("name")
 			tdrive_stock = data_row.get("stock_folder")
 			backend_stock= data_row.get("stock_backend")
 			cmyk = data_row.get("cmyk")
@@ -434,8 +491,8 @@ class PrinterQueuBuilderGUI:
 			frost = data_row.get("frost")
 			gloss = data_row.get("gloss")
 			quantity = data_row.get(self.table_columns["Quantity"])
-			sales = data_row.get("sales")
-			projection = data_row.get("projection")
+			sales = data_row.get(self.sale_keywords.get(self.sales_selection_widget.get()))
+			projection = data_row.get(self.projection_keywords.get(self.sales_selection_widget.get()))
 			priority = data_row.get("priority")
 			
 			if code.lower() in self.blacklist:
@@ -449,11 +506,12 @@ class PrinterQueuBuilderGUI:
 			else:
 				mytag = "normal_odd"
 			
-			values_tuples = tuple(( "" if y is None else y) for y in  [code,priority,quantity,sales, projection, tdrive_stock,backend_stock,cmyk,white,frost,gloss])
+			values_tuples = tuple(( "" if y is None else y) for y in  [code,name,priority,quantity,sales, projection, tdrive_stock,backend_stock,cmyk,white,frost,gloss])
 			self.search_result_widget.insert("", "end", values=values_tuples, tags=mytag)
 			
 			counter +=1
 			if counter >= 99: break
+		
 		return
 		
 	def copy_selection(self, event):
