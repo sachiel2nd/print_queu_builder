@@ -479,6 +479,10 @@ class PrinterQueuBuilderGUI:
 		self.search_result_widget.tag_configure("normal_odd", background="#E0E0E0")
 		self.search_result_widget.tag_configure("blacklisted", background="#777777")
 		self.search_result_widget.tag_configure("duplicated", background="#FF7F7F")
+		self.search_result_widget.tag_configure("priority1_even", background="#FFF4E5")
+		self.search_result_widget.tag_configure("priority1_odd", background="#F7F2D4")
+		self.search_result_widget.tag_configure("priority2_even", background="#FFF4E5")
+		self.search_result_widget.tag_configure("priority2_odd", background="#FFEDD5")
 		
 		
 		for data_row in self.filtered_data:
@@ -502,9 +506,19 @@ class PrinterQueuBuilderGUI:
 				print("duplicated tag found")
 				mytag = "duplicated"
 			elif counter % 2:
-				mytag = "normal_even"
+				if priority == "1":
+					mytag = "priority1_even"
+				elif priority == "2":
+					mytag = "priority2_even"
+				else:
+					mytag = "normal_even"
 			else:
-				mytag = "normal_odd"
+				if priority == "1":
+					mytag = "priority1_odd"
+				elif priority == "2":
+					mytag = "priority2_odd"
+				else:
+					mytag = "normal_odd"
 			
 			values_tuples = tuple(( "" if y is None else y) for y in  [code,name,priority,quantity,sales, projection, tdrive_stock,backend_stock,cmyk,white,frost,gloss])
 			self.search_result_widget.insert("", "end", values=values_tuples, tags=mytag)
